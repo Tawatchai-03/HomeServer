@@ -44,7 +44,7 @@ app.post('/houses', upload.single('image'), (req, res) => {
   console.log(req.body);
   console.log(req.file);
 
-  const {
+  let {
     size,
     bedrooms,
     bathrooms,
@@ -56,13 +56,23 @@ app.post('/houses', upload.single('image'), (req, res) => {
     address
   } = req.body;
 
+  // ตรวจสอบและแปลงปี พ.ศ. เป็น ค.ศ.
+  year_built = parseInt(year_built, 10);
+  if (year_built >= 2400) { // สมมติว่าถ้าปีมากกว่าหรือเท่ากับ 2400 ถือว่าเป็นปี พ.ศ.
+    year_built -= 543;
+  }
+
   const image_url = req.file ? `/uploads/${req.file.filename}` : null;
 
   const sql = 'INSERT INTO houses (size, bedrooms, bathrooms, price, house_condition, house_type, year_built, parking_spaces, address, image_url) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)';
   const values = [size, bedrooms, bathrooms, price, house_condition, house_type, year_built, parking_spaces, address, image_url];
 
+  // Log the SQL query and values
+  console.log(sql, values);
+
   db.query(sql, values, (err, result) => {
     if (err) {
+      console.error('Error occurred while saving data:', err);
       return res.status(500).json({ error: err });
     }
     res.json({ message: 'House added successfully', id: result.insertId });
